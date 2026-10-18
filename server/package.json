@@ -1,0 +1,17 @@
+{
+  "name": "shadow-fx-server",
+  "version": "0.1.0",
+  "description": "Shadow FX — forex education, signal journal and VIP member area. Built on the same stack as Vertex Chart Scanner so the two can merge later.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0"
+  }
+}

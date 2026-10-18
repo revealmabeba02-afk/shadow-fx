@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#07060B" />
+<title>Log in &middot; Shadow FX</title>
+<meta name="robots" content="noindex, follow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<div class="glow-field" aria-hidden="true">
+  <span class="glow-blob glow-blob--a"></span>
+  <span class="glow-blob glow-blob--b"></span>
+</div>
+
+<header class="topbar">
+  <div class="shell topbar__row">
+    <a class="brand" href="/"><span class="brand__mark">SFX</span><span class="brand__name">Shadow FX</span></a>
+    <div class="topbar__actions"><a class="btn btn--ghost" href="/signup">Sign up</a></div>
+  </div>
+</header>
+
+<main class="auth">
+  <div class="auth-card">
+    <h1 class="auth-card__title">Welcome back</h1>
+    <p class="auth-card__lede">Log in to your Shadow FX account.</p>
+
+    <p class="auth-alert auth-alert--info" id="setup-alert" hidden>Accounts are not connected yet. Add the Supabase keys to <code>server/.env</code> and restart.</p>
+    <p class="auth-alert auth-alert--error" id="form-alert" role="alert" hidden></p>
+
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label class="field__label" for="email">Email</label>
+        <input class="input" id="email" name="email" type="email" autocomplete="email" inputmode="email" required placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label class="field__label" for="password">Password</label>
+        <div class="field__wrap">
+          <input class="input input--pw" id="password" name="password" type="password" autocomplete="current-password" required placeholder="Your password" />
+          <button type="button" class="pw-toggle" data-toggle="password" aria-label="Show password">Show</button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn--primary btn--block scan-btn" id="submit-btn">
+        <span class="scan-btn__label">Log in</span>
+        <span class="scan-btn__spinner" aria-hidden="true"></span>
+      </button>
+    </form>
+
+    <p class="auth-switch">New here? <a href="/signup" id="signup-link">Create an account</a></p>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+<script src="/config.js"></script>
+<script src="/auth-client.js"></script>
+<script src="/auth-pages.js"></script>
+<script>
+  (async () => {
+    const { Auth } = window;
+    const next = Auth.safeNext(new URLSearchParams(location.search).get("next"));
+    document.getElementById("signup-link").href = "/signup" + location.search;
+
+    if (!AuthPage.guardSetup()) return;
+    if (await Auth.getSession()) return location.replace(next);
+
+    const form = document.getElementById("login-form");
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      AuthPage.clearError();
+      if (!email.value.trim() || !password.value) {
+        return AuthPage.showError("Enter your email and password.", !email.value.trim() ? email : password);
+      }
+      AuthPage.setBusy(true);
+      const { error } = await Auth.client.auth.signInWithPassword({ email: email.value.trim(), password: password.value });
+      AuthPage.setBusy(false);
+      if (error) return AuthPage.showError(Auth.friendlyError(error), password);
+      location.replace(next);
+    });
+  })();
+</script>
+</body>
+</html>

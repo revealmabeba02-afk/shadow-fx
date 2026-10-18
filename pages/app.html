@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-check">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#07060B" />
+<title>Dashboard &middot; Shadow FX</title>
+<meta name="robots" content="noindex, follow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/style.css" />
+<style>.auth-check body { visibility: hidden; }</style>
+<noscript><style>.auth-check body { visibility: visible; }</style></noscript>
+<script>setTimeout(function () { document.documentElement.classList.remove("auth-check"); }, 4000);</script>
+</head>
+<body>
+
+<div class="glow-field" aria-hidden="true">
+  <span class="glow-blob glow-blob--a"></span>
+  <span class="glow-blob glow-blob--b"></span>
+</div>
+
+<header class="topbar">
+  <div class="shell topbar__row">
+    <a class="brand" href="/"><span class="brand__mark">SFX</span><span class="brand__name">Shadow FX</span></a>
+    <div class="topbar__actions">
+      <span class="status-line" id="account-email"></span>
+      <button class="btn btn--ghost" id="logout-btn">Log out</button>
+    </div>
+  </div>
+</header>
+
+<main class="shell" style="padding-top:32px; padding-bottom:60px;">
+  <p class="auth-alert auth-alert--info" id="setup-notice" hidden></p>
+
+  <nav class="dash-nav">
+    <button class="dash-tab is-active" data-view="learn">Learning Hub</button>
+    <button class="dash-tab" data-view="signals">Signal Center</button>
+    <button class="dash-tab" data-view="vip">VIP Vault</button>
+  </nav>
+
+  <section id="view-learn" class="dash-view is-active">
+    <h2 style="margin-bottom:18px;">Learning Hub</h2>
+    <div class="lesson-list" id="lesson-list"></div>
+  </section>
+
+  <section id="view-signals" class="dash-view">
+    <h2 style="margin-bottom:18px;">Signal Center</h2>
+    <p class="status-line" style="margin-bottom:18px;">Your own setup journal — private to your account.</p>
+    <form id="note-form" class="note-form">
+      <div class="note-form__row">
+        <input class="input" id="note-pair" placeholder="Pair" value="XAUUSD" maxlength="20" />
+      </div>
+      <textarea class="input" id="note-notes" rows="3" maxlength="2000" placeholder="e.g. Waiting for a confirmed break of the previous high before entering..." required></textarea>
+      <button type="submit" class="btn btn--primary" id="note-submit">Add setup note</button>
+      <p class="status-line" id="note-status" hidden></p>
+    </form>
+    <div id="note-list"></div>
+    <p class="status-line" id="note-empty" hidden>No setup notes yet — add your first one above.</p>
+  </section>
+
+  <section id="view-vip" class="dash-view">
+    <h2 style="margin-bottom:18px;">VIP Vault</h2>
+    <div class="vip-card" id="vip-locked">
+      <div class="eyebrow">LOCKED</div>
+      <h3>VIP access not active yet</h3>
+      <p>Upgrade to a paid tier and King will unlock this for your account.</p>
+    </div>
+    <div class="vip-card" id="vip-unlocked" hidden>
+      <div class="eyebrow" style="color: var(--accent-gold);">VIP ACTIVE</div>
+      <h3>Welcome to the Vault</h3>
+      <p>Advanced lessons and member resources will appear here as they're added.</p>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+<script src="/config.js"></script>
+<script src="/auth-client.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

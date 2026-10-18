@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#07060B" />
+<title>Sign up &middot; Shadow FX</title>
+<meta name="robots" content="noindex, follow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<div class="glow-field" aria-hidden="true">
+  <span class="glow-blob glow-blob--a"></span>
+  <span class="glow-blob glow-blob--b"></span>
+</div>
+
+<header class="topbar">
+  <div class="shell topbar__row">
+    <a class="brand" href="/"><span class="brand__mark">SFX</span><span class="brand__name">Shadow FX</span></a>
+    <div class="topbar__actions"><a class="btn btn--ghost" href="/login">Log in</a></div>
+  </div>
+</header>
+
+<main class="auth">
+  <div class="auth-card">
+
+    <div id="signup-view">
+      <h1 class="auth-card__title">Create your account</h1>
+      <p class="auth-card__lede">Start learning and journaling your setups in under a minute.</p>
+
+      <p class="auth-alert auth-alert--info" id="setup-alert" hidden>Accounts are not connected yet. Add the Supabase keys to <code>server/.env</code> and restart.</p>
+      <p class="auth-alert auth-alert--error" id="form-alert" role="alert" hidden></p>
+
+      <form id="signup-form" novalidate>
+        <div class="field">
+          <label class="field__label" for="name">Name</label>
+          <input class="input" id="name" name="name" type="text" autocomplete="name" required maxlength="80" placeholder="Your name" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="email">Email</label>
+          <input class="input" id="email" name="email" type="email" autocomplete="email" inputmode="email" required placeholder="you@example.com" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="password">Password</label>
+          <div class="field__wrap">
+            <input class="input input--pw" id="password" name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="At least 8 characters" />
+            <button type="button" class="pw-toggle" data-toggle="password" aria-label="Show password">Show</button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn--primary btn--block scan-btn" id="submit-btn">
+          <span class="scan-btn__label">Create account</span>
+          <span class="scan-btn__spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <p class="auth-switch">Already have an account? <a href="/login" id="login-link">Log in</a></p>
+      <p class="hero__disclaimer" style="margin-top:14px;">Shadow FX gives education and planning tools. It is not financial advice.</p>
+    </div>
+
+    <div id="confirm-view" hidden>
+      <h1 class="auth-card__title">Check your email</h1>
+      <p class="auth-card__lede">We sent a confirmation link to <strong id="confirm-email"></strong>. Open it on this device to finish setting up your account.</p>
+      <a class="btn btn--ghost btn--block" href="/login">Back to log in</a>
+    </div>
+
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+<script src="/config.js"></script>
+<script src="/auth-client.js"></script>
+<script src="/auth-pages.js"></script>
+<script>
+  (async () => {
+    const { Auth } = window;
+    const next = Auth.safeNext(new URLSearchParams(location.search).get("next"));
+    document.getElementById("login-link").href = "/login" + location.search;
+
+    if (!AuthPage.guardSetup()) return;
+    if (await Auth.getSession()) return location.replace(next);
+
+    const form = document.getElementById("signup-form");
+    const name = document.getElementById("name");
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      AuthPage.clearError();
+
+      if (!name.value.trim()) return AuthPage.showError("Please enter your name.", name);
+      if (!EMAIL_RE.test(email.value.trim())) return AuthPage.showError("Please enter a valid email address.", email);
+      if (password.value.length < 8) return AuthPage.showError("Password must be at least 8 characters.", password);
+
+      AuthPage.setBusy(true);
+      const { data, error } = await Auth.client.auth.signUp({
+        email: email.value.trim(),
+        password: password.value,
+        options: { data: { full_name: name.value.trim() }, emailRedirectTo: location.origin + next }
+      });
+      AuthPage.setBusy(false);
+
+      if (error) return AuthPage.showError(Auth.friendlyError(error), email);
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        return AuthPage.showError("An account with that email already exists. Log in instead.", email);
+      }
+      if (data.session) return location.replace(next);
+
+      document.getElementById("confirm-email").textContent = email.value.trim();
+      document.getElementById("signup-view").hidden = true;
+      document.getElementById("confirm-view").hidden = false;
+    });
+  })();
+</script>
+</body>
+</html>

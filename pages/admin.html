@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-check">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#07060B" />
+<title>Admin &middot; Shadow FX</title>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/style.css" />
+<style>.auth-check body { visibility: hidden; }</style>
+<noscript><style>.auth-check body { visibility: visible; }</style></noscript>
+<script>setTimeout(function () { document.documentElement.classList.remove("auth-check"); }, 4000);</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="shell topbar__row">
+    <a class="brand" href="/"><span class="brand__mark">SFX</span><span class="brand__name">Shadow FX Admin</span></a>
+  </div>
+</header>
+
+<main class="shell" style="padding:32px 24px 60px;">
+  <p id="denied" class="auth-alert auth-alert--error" hidden>Not authorized.</p>
+
+  <div class="card" id="users-card">
+    <h3 style="margin-bottom:14px;">Signups</h3>
+    <p class="status-line" id="users-empty" hidden>No signups yet.</p>
+    <table class="admin-table" id="users-table" hidden>
+      <thead><tr><th>Email</th><th>Signed up</th><th>VIP</th><th></th></tr></thead>
+      <tbody id="users-body"></tbody>
+    </table>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+<script src="/config.js"></script>
+<script src="/auth-client.js"></script>
+<script>
+(async () => {
+  const Auth = window.Auth;
+  const root = document.documentElement;
+  const reveal = () => root.classList.remove("auth-check");
+
+  if (!Auth.ready) { reveal(); return; }
+  const session = await Auth.getSession();
+  if (!session) { location.replace("/login?next=" + encodeURIComponent("/admin")); return; }
+
+  const authHeader = { Authorization: `Bearer ${session.access_token}` };
+
+  async function loadUsers() {
+    const emptyEl = document.getElementById("users-empty");
+    const tableEl = document.getElementById("users-table");
+    const bodyEl = document.getElementById("users-body");
+    try {
+      const r = await fetch("/api/admin/users", { headers: authHeader });
+      const data = await r.json().catch(() => null);
+      if (r.status === 403) { document.getElementById("denied").hidden = false; document.getElementById("users-card").hidden = true; return; }
+      if (!r.ok) throw new Error((data && data.error) || "Could not load users.");
+      const users = data.users || [];
+      if (users.length === 0) { emptyEl.hidden = false; return; }
+      tableEl.hidden = false;
+      bodyEl.innerHTML = users.map((u) => `
+        <tr data-email="${u.email}">
+          <td>${u.email}</td>
+          <td>${new Date(u.created_at).toLocaleDateString()}</td>
+          <td><span class="vip-pill ${u.is_vip ? "" : "vip-pill--off"}">${u.is_vip ? "VIP" : "Free"}</span></td>
+          <td><button class="btn btn--ghost" data-toggle-vip="${u.email}" data-current="${u.is_vip}">${u.is_vip ? "Revoke VIP" : "Grant VIP"}</button></td>
+        </tr>
+      `).join("");
+      bodyEl.querySelectorAll("[data-toggle-vip]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const email = btn.dataset.toggleVip;
+          const next = btn.dataset.current !== "true";
+          btn.disabled = true;
+          try {
+            await fetch("/api/admin/vip", {
+              method: "POST",
+              headers: { ...authHeader, "Content-Type": "application/json" },
+              body: JSON.stringify({ email, vip: next })
+            });
+            loadUsers();
+          } catch {
+            btn.disabled = false;
+          }
+        });
+      });
+    } catch (err) {
+      emptyEl.textContent = err.message;
+      emptyEl.hidden = false;
+    }
+  }
+
+  reveal();
+  loadUsers();
+})();
+</script>
+</body>
+</html>
