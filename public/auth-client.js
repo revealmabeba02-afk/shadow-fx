@@ -20,13 +20,14 @@
   else if (!window.supabase) reason = "library";
   else {
     try {
-      // persistSession stays true (login must survive the redirect to the
-      // app page, which is a full page load) but it's backed by
-      // sessionStorage instead of localStorage — so you're still signed in
-      // as you click around, but closing the tab/browser clears it and the
-      // next visit asks for your details again.
+      // persistSession + localStorage: a login survives the redirect to the
+      // app page and future visits, same as most sites. sessionStorage was
+      // tried first so a tab close would sign people out automatically, but
+      // some mobile browsers clear it between page loads, which made login
+      // bounce straight back to the login page — worse than just staying
+      // signed in until Log out is pressed.
       client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.sessionStorage }
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage }
       });
     } catch {
       reason = "client";
